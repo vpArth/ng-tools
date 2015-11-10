@@ -3,6 +3,7 @@ var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
 var concat = require('gulp-concat');
 var jshint = require('gulp-jshint');
+var shell = require('gulp-shell');
 var del = require('del');
 var path = require('path');
 
@@ -34,10 +35,14 @@ gulp.task('clean', function () {
   return del.sync(DEST);
 });
 
-gulp.task('build', ['clean', 'dist.min']);
+gulp.task('build', ['test', 'clean', 'dist.min']);
+
+gulp.task('test', shell.task([
+    'npm test'
+]));
 
 gulp.task('watch', function(){
     gulp.watch([SRC+JS], ['build']);
 });
 
-gulp.task('default', ['watch', 'build']);
+gulp.task('default', ['build', 'watch']);
