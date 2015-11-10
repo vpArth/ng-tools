@@ -1,0 +1,17 @@
+<div ng-init="ctrl.data={}">
+    <div class="frame" style="width: 100%">
+        <h3>Dev Cursor Control</h3>
+        <input arth-cursor="ctrl.data" ng-model="str" style="width: 100%" placeholder="Enter anything here..."/>
+    </div>
+    <div class="frame">
+        <h3>Selection settings</h3>
+        <p>Start: <input type="number" min="0" max="{{str.length}}" ng-model="ctrl.data.start" /></p>
+        <p>End: <input type="number" min="0" max="{{str.length}}" ng-model="ctrl.data.end" /></p>
+        <p title="You can not to set backward selection, when nothing selected">
+            Forward: <input type="checkbox" ng-model="ctrl.data.dir" />
+        </p>
+    </div>
+    <div class="frame">
+        <pre>Data: &#0010;{{ctrl.data|json}}</pre>
+    </div>
+</div>
