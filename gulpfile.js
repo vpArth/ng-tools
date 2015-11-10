@@ -18,7 +18,6 @@ gulp.task('dist.min', ['dist'], function() {
         .pipe(gulp.dest(DEST))
         .pipe(concat('arth.min.js'))
         .pipe(gulp.dest(DEST))
-        .pipe(gulp.dest('demo/')) // put into demo
         ;
 });
 
@@ -29,7 +28,6 @@ gulp.task('dist', function () {
         .pipe(gulp.dest(DEST))
         .pipe(concat('arth.js'))
         .pipe(gulp.dest(DEST))
-        .pipe(gulp.dest('demo/')); // put into demo
 });
 
 gulp.task('clean', function () {
