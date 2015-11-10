@@ -133,62 +133,6 @@
     'arth.svc.InputSelection'
 ]), 'arthCursor');
 
-(function (module, directiveName) {
-    'use strict';
-
-    module.directive(directiveName, Directive);
-
-    Directive.$inject = ['InputSelection'];
-    function Directive($svc) {
-        var directive = {
-            restrict: 'A',
-            scope: {},
-            require: ['ngModel'],
-            compile: compile
-        };
-        directive.scope[directiveName] = '=';
-
-        return directive;
-
-        /**************/
-
-        function compile (el) {
-            if (el.prop("tagName") !== 'INPUT' || el.prop("type")&&el.prop("type")!=='text') {
-                throw 'This directive should be applied to input[type=text] element.';
-            }
-            return linker;
-        }
-        function linker (scope, el, attrs, ctrls) {
-            var ngModel = ctrls[0];
-            // ngModel.$formatters.push(formatter);
-            ngModel.$parsers.push(parser);
-            var model = scope[directiveName];
-            var tokens = [];
-            model.tokens = tokens;
-            model.addToken = addToken;
-
-            function parser (value) {
-                var old = tokens.join('');
-                // allow add to tokens only
-                if (value.substr(0, old.length) === old && value.length > old.length) {
-                    tokens.push(value.substr(old.length));
-                    return value;
-                }
-                return old;
-            }
-
-            function addToken(token) {
-                tokens.push(token);
-                ngModel.$setViewValue((ngModel.$viewValue||'')+token);
-                ngModel.$render();
-            }
-        }
-    }
-
-})(angular.module('arth.tokenized', [
-    'arth.svc.InputSelection'
-]), 'arthTokenized');
-
 (function (module) {
     'use strict';
 
