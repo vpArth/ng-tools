@@ -37,9 +37,11 @@ gulp.task('clean', function () {
 
 gulp.task('build', ['test', 'clean', 'dist.min']);
 
-gulp.task('test', shell.task([
-    'npm test'
-]));
+gulp.task('test', ['unit-test', 'e2e-test']);
+gulp.task('unit-test', shell.task('npm test'));
+gulp.task('e2e-test',  shell.task(
+    'npm run-script e2e-test && notify-send "Ng-tools: E2E Tests - SUCCESS" || notify-send "Ng-tools: E2E Tests - FAIL"'
+));
 
 gulp.task('watch', function(){
     gulp.watch([SRC+JS], ['build']);
