@@ -43,7 +43,7 @@ gulp.task('e2e-test',  shell.task(
     'npm run-script e2e-test && notify-send "Ng-tools: E2E Tests - SUCCESS" || notify-send "Ng-tools: E2E Tests - FAIL"'
 ));
 
-gulp.task('watch', function(){
+gulp.task('watch', ['build'], function(){
     gulp.watch([SRC+JS], ['build']);
 });
 
