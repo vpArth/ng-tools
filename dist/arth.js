@@ -1,6 +1,7 @@
+// @todo: make model.pos settable too
+
 (function (module, directiveName) {
     'use strict';
-
     module.directive(directiveName, Directive);
 
     Directive.$inject = ['InputSelection'];
@@ -38,7 +39,6 @@
             $scope.$on('$destroy', switchOffListeners);
 
             // export
-            $scope.debug = 'Debug!';
             $scope[directiveName] = sc;
 
             /***Implementation ********/
@@ -55,12 +55,7 @@
             function setViewValue(data) {
                 if (compare(data, sc.$viewValue)) return sc;
                 if (!data) data = {};
-                sc.$viewValue = {
-                    start: data.start || 0,
-                    end: data.end || 0,
-                    dir: data.dir,
-                    pos: data.dir ? data.end || 0 : data.start || 0
-                };
+                setObj(sc.$viewValue, data.start, data.end, data.dir);
                 return sc;
             }
             var lastModelValue;
@@ -68,23 +63,11 @@
                 if (!data) data = {};
                 if (!sc.$modelValue) sc.$modelValue = getter($scope);
                 if (lastModelValue && compare(lastModelValue, sc.$modelValue)) return sc;
-                sc.$modelValue.start = data.start || 0;
-                sc.$modelValue.end = data.end || 0;
-                sc.$modelValue.dir = data.dir;
-                sc.$modelValue.pos = data.dir ? data.end || 0 : data.start || 0;
-
+                setObj(sc.$modelValue, data.start, data.end, data.dir);
                 setter($scope, sc.$modelValue);
                 return sc;
             }
-            function compare(o1, o2) {
-                if (!o1 || !o2) return false;
-                var res = true;
-                res = res && o1.start === o2.start;
-                res = res && o1.end === o2.end;
-                res = res && o1.dir === o2.dir;
-                res = res && o1.pos === o2.pos;
-                return res;
-            }
+
             function selectionWatch() {
                 var middle = sc.$middleware
                   , idx = middle.length
@@ -117,6 +100,30 @@
                     });
                 }
             }
+            // Helper functions
+            function setObj(o, start, end, dir) {
+                var d, p
+                  , s = Math.min(start, end)
+                  , e = Math.max(start, end)
+                  , d = dir
+                  , p = d ? e : s
+                  ;
+                o.start = s;
+                o.end   = e;
+                o.dir   = d;
+                o.post  = p;
+                return o;
+            }
+            function compare(o1, o2) {
+                if (!o1 || !o2) return false;
+                var res = true;
+                res = res && o1.start === o2.start;
+                res = res && o1.end === o2.end;
+                res = res && o1.dir === o2.dir;
+                res = res && o1.pos === o2.pos;
+                return res;
+            }
+
         }
 
         function compile (el) {
