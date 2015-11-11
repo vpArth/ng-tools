@@ -15,33 +15,27 @@
 
         return directive;
 
-        /** Implementation ************/
         function SelectionController ($scope, el, $parse, $attrs, $svc, $rootScope) {
-            var sc = this
-              , getter = $parse($attrs[directiveName])
-              , setter = getter.assign
-              ;
+            var sc = this, getter, setter;
+            var twoWay = !!$attrs[directiveName];
             sc.$setModelValue = setModelValue;
             sc.$setViewValue = setViewValue;
             sc.$viewValue = $svc.getSelection(el);
             sc.$render = render;
-            sc.$middleware = [];
 
-            // initialize
-            sc.$setModelValue({start: 0, end: 0, pos: 0, dir: undefined});
-
-            // model to view
-            $scope.$watch($attrs[directiveName], selectionWatch, true);
+            if (twoWay) {
+                getter = $parse($attrs[directiveName]);
+                setter = getter.assign;
+                // model to view
+                $scope.$watch($attrs[directiveName], selectionWatch, true);
+                // initialize
+                sc.$setModelValue({start: 0, end: 0, pos: 0, dir: undefined});
+            }
 
             // view to model
             var eventList = ['click', 'keyup', 'keydown', 'keypress', 'mousedown', 'mouseup', 'focus', 'blur'];
             switchOnListeners();
             $scope.$on('$destroy', switchOffListeners);
-
-            // export
-            $scope[directiveName] = sc;
-
-            /***Implementation ********/
 
             function render() {
                 $svc.setSelection(
@@ -69,9 +63,7 @@
             }
 
             function selectionWatch() {
-                var middle = sc.$middleware
-                  , idx = middle.length
-                  , modelVal = getter($scope)
+                var modelVal = getter($scope)
                   , viewValue
                   ;
                 if (posChangedOnly(modelVal, sc.$viewValue)) {
@@ -100,7 +92,7 @@
             }
             function updateModelView(ev) {
                 sc.$viewValue = $svc.getSelection(el);
-                if (!$rootScope.$$phase) {
+                if (twoWay && !$rootScope.$$phase) {
                     $scope.$apply(function(){
                         sc.$setModelValue(sc.$viewValue);
                     });
