@@ -64,8 +64,8 @@ describe('arthCursor directive testing', function() {
     });
   });
 
-  describe('Selection following for a model changes', function(){
-    it('start/end model values should follow position changes', function(){
+  describe('Input selection/cursor position', function(){
+    it('should follow scope position changes', function(){
       input.sendKeys('0123456789abcdefghij');
 
       form.pos.click();
@@ -76,7 +76,15 @@ describe('arthCursor directive testing', function() {
       expect(form.start.getAttribute('value')).toEqual('5');
       expect(form.end.getAttribute('value')).toEqual('5');
       expect(form.dir.getAttribute('checked')).toEqual('true');
-      // browser.pause();
+    });
+    it('should follow scope start/end changes', function(){
+      input.sendKeys('0123456789abcdefghij');
+      form.start.click();
+      form.start.sendKeys(protractor.Key.chord(protractor.Key.CONTROL, 'a'));
+      form.start.sendKeys('6');
+
+      // @todo: investigate how-to
+      // expect(actual selection range).is({start: 6, end: 20});
     });
   });
 });
