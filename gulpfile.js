@@ -35,7 +35,7 @@ gulp.task('clean', function () {
   return del.sync(DEST);
 });
 
-gulp.task('build', ['test', 'clean', 'dist.min']);
+gulp.task('build', ['unit-test', 'clean', 'dist.min']);
 
 gulp.task('test', ['unit-test', 'e2e-test']);
 gulp.task('unit-test', shell.task('npm test'));

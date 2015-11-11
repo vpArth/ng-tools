@@ -74,6 +74,12 @@
                   , modelVal = getter($scope)
                   , viewValue
                   ;
+                if (posChangedOnly(modelVal, sc.$viewValue)) {
+                    setObj(modelVal, modelVal.pos, modelVal.pos, true);
+                    setter($scope, modelVal);
+                    // scope updated, wait next $watch trigger
+                    return modelVal;
+                }
                 sc.$modelValue = modelVal;
                 viewValue = sc.$modelValue;
 
@@ -102,8 +108,7 @@
             }
             // Helper functions
             function setObj(o, start, end, dir) {
-                var d, p
-                  , s = Math.min(start, end)
+                var s = Math.min(start, end)
                   , e = Math.max(start, end)
                   , d = dir
                   , p = d ? e : s
@@ -111,7 +116,7 @@
                 o.start = s;
                 o.end   = e;
                 o.dir   = d;
-                o.post  = p;
+                o.pos  = p;
                 return o;
             }
             function compare(o1, o2) {
@@ -121,6 +126,15 @@
                 res = res && o1.end === o2.end;
                 res = res && o1.dir === o2.dir;
                 res = res && o1.pos === o2.pos;
+                return res;
+            }
+            function posChangedOnly(o1, o2) {
+                if (!o1 || !o2) return false;
+                var res = true;
+                res = res && o1.start === o2.start;
+                res = res && o1.end === o2.end;
+                res = res && o1.dir === o2.dir;
+                res = res && o1.pos !== o2.pos;
                 return res;
             }
 
