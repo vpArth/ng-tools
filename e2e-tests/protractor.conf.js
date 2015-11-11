@@ -7,10 +7,7 @@ var config = {
   capabilities: {
     'browserName': 'chrome'
   },
-  params: {
-      url: 'https://vparth.github.io/ng-tools'
-  },
-  baseUrl: 'https://vparth.github.io/ng-tools',
+  baseUrl: 'https://vparth.github.io/ng-tools/',
   framework: 'jasmine',
   jasmineNodeOpts: {
     defaultTimeoutInterval: 30000
@@ -19,13 +16,14 @@ var config = {
 };
 
 // override with local config, if exists
-var localCfg = {};
-var localFn = __dirname+'/protractor.conf.local.js';
-if (fs.existsSync(localFn, fs.R_OK)) {
-  localCfg = require(localFn).config;
-  extend(config, localCfg);
+var cfgGlobal = ~process.argv.indexOf('--cfg-global');
+if (!cfgGlobal) {
+  var localCfg = {};
+  var localFn = __dirname+'/protractor.conf.local.js';
+  if (fs.existsSync(localFn, fs.R_OK)) {
+    localCfg = require(localFn).config;
+    extend(config, localCfg);
+  }
 }
-console.log(config);
-
 
 exports.config = config;
