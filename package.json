@@ -12,7 +12,7 @@
     "e2e-test": "node_modules/.bin/protractor e2e-tests/protractor.conf.js",
     "e2e-gtest": "node_modules/.bin/protractor e2e-tests/protractor.conf.js --cfg-global",
     "karma": "[ -e karma.pid ] && (kill $(cat karma.pid); rm karma.pid; echo Karma Stopped) || (node_modules/.bin/karma start --auto-watch >/dev/null 2>&1 & echo $!>karma.pid)",
-    "start": "node_modules/.bin/gulp watch & echo $!>gulp.pid",
+    "start": "node_modules/.bin/gulp watch >gulp.log 2>&1 & echo $!>gulp.pid",
     "stop": "kill $(cat gulp.pid); rm gulp.pid; echo Gulp Stopped",
     "postinstall": "node_modules/.bin/bower install && npm prune"
   },
