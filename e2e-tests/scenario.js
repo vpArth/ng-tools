@@ -1,7 +1,7 @@
 // ng-tools demo page scenario
 describe('arthCursor directive demo', function() {
   it('User interaction with directive', function() {
-    browser.get('https://vparth.github.io/ng-tools');
+    browser.get('/');
     expect(browser.getTitle()).toEqual('Ng-tools');
     $('nav>ul>li').click();
     var input = element(by.model('str'));
