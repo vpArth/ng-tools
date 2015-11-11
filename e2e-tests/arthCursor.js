@@ -1,22 +1,16 @@
 // ng-tools demo page scenario
-function keyRepeat(key, multiplier, seq) {
-    seq = seq || [];
-    var cx;
-    cx=multiplier;
-    while(cx--) {
-      seq.push(protractor.Key.ARROW_LEFT);
-    }
-    return seq;
-}
 
+var help = new (require('./helper.js').Helper)(browser, protractor);
 
-var input, form;
+var input, form, inputWE;
 describe('arthCursor directive testing', function() {
   beforeEach(function(){
     browser.get('');
     expect(browser.getTitle()).toEqual('Ng-tools');
     $('nav>ul>li').click();
     input = element(by.model('str'));
+    inputWE = input.getWebElement();
+
     form = {
         start: element(by.model('ctrl.data.start')),
         end: element(by.model('ctrl.data.end')),
@@ -41,12 +35,12 @@ describe('arthCursor directive testing', function() {
     it('should follow user selection', function() {
       input.sendKeys('0123456789abcdefghij');
 
-      var sequence = [];
-      keyRepeat(protractor.Key.ARROW_LEFT, 7, sequence);
-      sequence.push(protractor.Key.SHIFT);
-      keyRepeat(protractor.Key.ARROW_LEFT, 10, sequence);
-      sequence.push(protractor.Key.NULL);
-      input.sendKeys.apply(input, sequence);
+      var s = help.getKeySender(input);
+      s.addN(protractor.Key.ARROW_LEFT, 7)
+       .add(protractor.Key.SHIFT)
+       .addN(protractor.Key.ARROW_LEFT, 10)
+       .add(protractor.Key.NULL)
+       .send();
 
       expect(form.start.getAttribute('value')).toEqual('3');
       expect(form.end.getAttribute('value')).toEqual('13');
@@ -78,13 +72,16 @@ describe('arthCursor directive testing', function() {
       expect(form.dir.getAttribute('checked')).toEqual('true');
     });
     it('should follow scope start/end changes', function(){
-      input.sendKeys('0123456789abcdefghij');
+      help.setElProperty(input, 'value', '0123456789abcdefghij');
       form.start.click();
       form.start.sendKeys(protractor.Key.chord(protractor.Key.CONTROL, 'a'));
       form.start.sendKeys('6');
+      form.end.click();
+      form.end.sendKeys(protractor.Key.chord(protractor.Key.CONTROL, 'a'));
+      form.end.sendKeys('8');
 
-      // @todo: investigate how-to
-      // expect(actual selection range).is({start: 6, end: 20});
+      expect(help.getElProperty(input, 'selectionStart')).toEqual(6);
+      expect(help.getElProperty(input, 'selectionEnd')).toEqual(8);
     });
   });
 });
