@@ -2,14 +2,15 @@
 
 var help = new (require('./helper.js').Helper)(browser, protractor);
 
-var input, form, inputWE;
+var input, form;
 describe('arthCursor directive testing', function() {
   beforeEach(function(){
     browser.get('');
     expect(browser.getTitle()).toEqual('Ng-tools');
-    $('nav>ul>li').click();
+    var menu = element.all(by.repeater('m in ctrl.modules'));
+    menu.get(1).click();
+
     input = element(by.model('str'));
-    inputWE = input.getWebElement();
 
     form = {
         start: element(by.model('ctrl.data.start')),

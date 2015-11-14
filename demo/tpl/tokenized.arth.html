@@ -1,0 +1,22 @@
+<div>
+    <h3>{{ctrl.m.title}}</h3>
+    <div ng-controller="Tokenized as tok">
+        <div class="frame bbox" style="width: 100%">
+            <input arth-cursor="tok.cursor" arth-tokenized="tok.options" ng-model="tok.str"
+                style="width: 100%" class="bbox" />
+            <hr/>
+            {{tok.str}}
+        </div>
+        <div class="frame">
+            <h3>Test form</h3>
+            <p>
+                <button type="button" ng-click="tok.addToken(button.model)" ng-repeat="button in tok.buttons">
+                    {{button.view}}
+                </button>
+            </p>
+        </div>
+        <div class="frame">
+            <pre>Data: &#0010;{{tok|json}}</pre>
+        </div>
+    </div>
+</div>
