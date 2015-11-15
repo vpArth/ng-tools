@@ -6,7 +6,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node_modules/.bin/karma start --single-run",
+    "test": "node_modules/.bin/karma start --single-run; echo karma exited with $?",
     "wd-hub": "node_modules/.bin/webdriver-manager start & echo $!>wd-hub.pid ; xdg-open 'http://localhost:4444/wd/hub'",
     "wd-hub-stop": "kill $(cat wd-hub.pid); rm wd-hub.pid",
     "e2e-test": "node_modules/.bin/protractor e2e-tests/protractor.conf.js",

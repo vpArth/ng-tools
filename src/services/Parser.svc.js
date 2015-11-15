@@ -23,17 +23,26 @@ function CSVParser(Parser) {
 MappingParser.$inject = ['ParserFactory'];
 function MappingParser(Parser) {
     return MappingParserConstructor;
-    function MappingParserConstructor(tokenizers) {
+    function MappingParserConstructor(tokenizers, filter) {
         return new Parser(tokenizers, function(token, b, regexp, matches){
             if (token == '\0') return;
-            if (!b) return;
+            if (!b) return filter ? undefined : token;
             switch (regexp.type) {
                 case 'param_mapping':
-                    var val = regexp.mapping[matches[1]];
-                    if (typeof val == 'undefined') return;
-                    var subst = regexp.subst || '{{VALUE}}';
-                    return regexp.template.replace(subst, val);
-                default: return token;
+                    var m = matches.slice(1, -2);
+                    var tpl = regexp.template;
+                    var success = true;
+                    m.forEach(function (match, index) {
+                        var val = regexp.mapping[match];
+                        if (typeof val == 'undefined') {
+                            success = false;
+                            return;
+                        }
+                        tpl = tpl.replace(new RegExp('\\\\\\\$'+(index+1), 'g'), val);
+                    });
+                    return success ? tpl : (filter?undefined:token);
+                default:
+                    return token;
             }
         });
     }
@@ -75,8 +84,8 @@ function ParserFactory () {
             }
         };
     }
-    function getMapping(tokenizers) {
-        return new (MappingParser(Parser))(tokenizers);
+    function getMapping(tokenizers, filter) {
+        return new (MappingParser(Parser))(tokenizers, filter);
     }
 
     function parse(src) {

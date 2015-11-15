@@ -31,30 +31,30 @@ describe('Parser', function() {
             var vR = /\[([^\[\]]+?)\]/;
             vR.type = 'param_mapping';
             vR.mapping = view2model;
-            vR.subst = '{{VALUE}}';
-            vR.template = 'param({{VALUE}})';
+            vR.template = 'param(\\$1)';
 
             var mR = /param\((\d+)\)/;
             mR.type = 'param_mapping';
             mR.mapping = model2view;
-            mR.subst = '{{VALUE}}';
-            mR.template = '[{{VALUE}}]';
+            mR.template = '[\\$1]';
 
             var viewRegexps = [/\d/, /[\*\/\+\-\^\(\)\.]/,  vR];
             var modelRegexps = [/\d/, /[\*\/\+\-\^\(\)\.]/, mR];
             var views = [
                 ['[Age]-[Year]excess',['[Age]','-','[Year]']],
+                ['[Age]-[Year2',['[Age]','-','2']],
                 ['1+2*3^0.5', ['1','+','2','*','3','^','0','.','5']]
             ];
             var models = [
                 ['param(94)-param(95)excess',['param(94)','-','param(95)']],
+                ['param(94)-2',['param(94)','-','2']],
                 ['1+2*3^0.5', ['1','+','2','*','3','^','0','.','5']]
             ];
 
             var View = Factory.getRepeater(viewRegexps, true);
             var Model = Factory.getRepeater(modelRegexps, true);
-            var ViewToModel = new Mapping(viewRegexps);
-            var ModelToView = new Mapping(modelRegexps);
+            var ViewToModel = new Mapping(viewRegexps, true);
+            var ModelToView = new Mapping(modelRegexps, true);
 
             views.forEach(function(view){
                 expect(View.parse(view[0])).toEqual(view[1]);

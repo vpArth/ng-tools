@@ -20,20 +20,6 @@
   <script src="dist/arth.js"></script>
 
     <script>
-Object.defineProperty(Object.prototype, "flip", {
-    enumerable: false,
-    writable: false,
-    value: function () {
-      var result = {};
-      for (var prop in this) {
-        if(this.hasOwnProperty(prop)) {
-          result[this[prop]] = prop;
-        }
-      }
-      return result;
-    }
-});
-
 !function(modules){
   angular.module('app', modules.map(function(m){
     return 'arth.'+m.name;
@@ -49,17 +35,33 @@ Object.defineProperty(Object.prototype, "flip", {
         2: 'Month',
         3: 'Day',
         4: 'Age'
-    };
+    }, view2model = flip(model2view);
+
     C.options = {
-      modelviews: [{
+      modelviews: {
         commonExp: [
-            /\d/, /[\*\/\+\-\^\(\)\.]/,
+            /\d/,
+            /[\*\/\+\-\^\(\)\.]/,
             /(?:sin|cos|log|ln)\(/
         ],
-        mvMap: model2view,
-        regexp: [/\[([^\[\]]+?)\]/, /param\((\d+)\)/],
-        tpl: ['[{{VALUE}}]', 'param({{VALUE}})']
-      }]
+        maps: [{
+          mv: model2view,
+          vm: view2model,
+          reg: [/\[([^\[\]]+?)\]/, /param\((\d+)\)/],
+          tpl: ['[\\$1]', 'param(\\$1)']
+        }, {
+          mv: {
+            "exp": 'ℯ',
+            "pi": 'π'
+          },
+          vm: {
+            'ℯ': "exp",
+            'π': "pi"
+          },
+          reg: [/(ℯ|π)/, /const\('(\w+)'\)/],
+          tpl: ['\\$1', "const('\\$1')"]
+        }]
+      }
     };
 
     C.buttons = Object.keys(model2view).map(function(id){
@@ -70,6 +72,8 @@ Object.defineProperty(Object.prototype, "flip", {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].forEach(function(v){
         C.buttons.push({model: v, view: v});
     });
+    C.buttons.push({model: "const('pi')", view: 'π'});
+    C.buttons.push({model: "const('exp')", view: 'ℯ'});
     ;['sin(','cos(','lg(','ln('].forEach(function(v){
         C.buttons.push({model: v, view: v});
     });
@@ -77,6 +81,15 @@ Object.defineProperty(Object.prototype, "flip", {
 
     function addToken (token) {
       C.options.addToken(token);
+    }
+    function flip(obj) {
+      var result = {};
+      for (var prop in obj) {
+        if(obj.hasOwnProperty(prop)) {
+          result[obj[prop]] = prop;
+        }
+      }
+      return result;
     }
   }]);
 }([
