@@ -28,6 +28,7 @@ function Helper(browser, protractor) {
     this.getKeySender = getKeySender;
     this.getElProperty = getElProperty;
     this.setElProperty = setElProperty;
+    this.callElMethod = callElMethod;
 
     function getKeySender(el) {
         return new KeySequenceSender(el);
@@ -56,5 +57,16 @@ function Helper(browser, protractor) {
             });
             el[last] = val;
         }, el.getWebElement(), prop, val);
+    }
+    function callElMethod(el, method, args) {
+        return browser.executeScript(function (el, method, args) {
+            console.log(el, method, args);
+            var method = method.split('.');
+            var last = method.pop();
+            method.forEach(function (field, i){
+                el = el[field];
+            });
+            return el[last].apply(el, args);
+        }, el.getWebElement(), method, args);
     }
 }

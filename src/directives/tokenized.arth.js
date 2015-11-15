@@ -13,9 +13,9 @@
         };
     }
 
-    TokenizedController.$inject = ['$scope', '$rootScope', '$element', '$attrs', '$parse', '$timeout',
-    'ParseFormatService', 'InputSelection'];
-    function TokenizedController($scope, $rootScope, el, $attrs, $parse, $timeout, svc, sel) {
+    TokenizedController.$inject = ['$scope', '$element', '$attrs', '$parse', '$timeout',
+    'ParseFormatService', 'InputSelection', 'ParserFactory', 'MappingParser'];
+    function TokenizedController($scope, el, $attrs, $parse, $timeout, svc, sel, Parser, Mapping) {
         var ngModel = el.controller('ngModel')
           , ctrl = this
           , tokens = []
@@ -24,19 +24,102 @@
           , parsers = [], formatters = []
           ;
         // export interface
-        angular.extend(options.svc, {
-            format: format,
-            updateView: updateView,
-            tokens: tokens,
-            setPos: setPos,
+        angular.extend(options, {
             addToken: addToken
         });
 
-        svc.fillListProcesser(options.parsers, ngModel.$parsers);
-        svc.fillListProcesser(options.parsers, parsers);
-        svc.fillListProcesser(options.formatters, ngModel.$formatters);
-        svc.fillListProcesser(options.formatters, formatters);
 
+        if (options.modelviews) {
+            options.modelviews.forEach(setupModelView);
+        }
+
+        function setupModelView(cfg) {
+            var mv = cfg.mvMap
+              , vm = flip(mv)
+              , rv = cfg.regexp[0]
+              , rm = cfg.regexp[1]
+              , rc = cfg.commonExp
+              , tv = cfg.tpl[0]
+              , tm = cfg.tpl[1]
+              ;
+            rv.type = 'param_mapping';
+            rm.type = 'param_mapping';
+            rv.template = tm;
+            rm.template = tv;
+            rv.mapping = vm;
+            rm.mapping = mv;
+
+            if (!angular.isArray(rc)) rc = [rc];
+            rv = [rv].concat(rc);
+            rm = [rm].concat(rc);
+
+            var View = Parser.getRepeater(rv, true);
+            var Model = Parser.getRepeater(rm, true);
+            View.toModel = Parser.getMapping(rv);
+            Model.toView = Parser.getMapping(rm);
+
+            var pList = [parser, tokenize];
+            var fList = [formatter];
+            svc.fillListProcesser(pList, ngModel.$parsers);
+            svc.fillListProcesser(pList, parsers);
+            svc.fillListProcesser(fList, ngModel.$formatters);
+            svc.fillListProcesser(fList, formatters);
+
+            function toModel(val) {
+              var tokens = View.toModel.parse(val||'');
+              console.log('toModel', val, tokens);
+              return tokens;
+            }
+            function toView(val) {
+              var tokens = Model.toView.parse(val||'');
+              console.log('toView', val, tokens);
+              return tokens.join('');
+            }
+
+            function parser(val) {
+              var tokens = View.toModel.parse(val||'');
+              return tokens;
+            }
+            function formatter(val) {
+              var tokens = Model.toView.parse(val||'');
+              return tokens.join('');
+            }
+            function tokenize(toks, local) {
+              if (local) return toks.join('');
+              var curIndex = -1;
+              var len = tokens.length;
+              toks.forEach(function(token, index){
+                var old = tokens[index];
+                if (old !== token) {
+                  // many of assumptions here
+                  if (index >= len ) {
+                    save(index+1, 'New Token, set cursor after it');
+                  } else {
+                    if (token===tokens[index+1]) {
+                      save(index, 'Removed Token, set cursor before next');
+                    } else {
+                      save(index+1, 'Inserted Token, set cursor after next');
+                    }
+                  }
+                  tokens[index] = token;
+                }
+              });
+              if (len > toks.length) {
+                save(toks.length, 'Was truncated: set after last new token');
+                tokens.splice(toks.length);
+              }
+
+              var result = formatter(toks.join(''));
+              updateView(toks.join(''), curIndex);
+              return result;
+
+              // Store token position (0-n), where cursor should be
+              function save(index) {
+                if (~curIndex) return; //already set
+                curIndex = index;
+              }
+            }
+        }
         // @depends: formatters
         function format(val) {
           var idx = formatters.length;
@@ -56,18 +139,24 @@
           return result;
         }
         // @depends: ngModel, format
-        function updateView (val) {
+        function updateView (val, index) {
             var view = format(val);
+            console.log('updateView', ngModel.$viewValue, view, ngModel.$viewValue === view);
             if (view !== ngModel.$viewValue) {
                 ngModel.$setViewValue(view);
                 ngModel.$render();
+                setPos(index);
             }
         }
         // @depends: $timeout, el, tokens, format, InputSelection
+        var cursorPosition = 0;
         function setPos (index) {
-            var pos = format(tokens.map(format).slice(0, index).join('')).length;
+            if (!~index || typeof index == 'undefined') return;
+            var pos = tokens.map(format).slice(0, index).join('').length;
+            console.log('setPos', tokens.map(format).slice(0, index).join(''), index, pos);
             $timeout(function(){
                 sel.setSelection(el, pos, pos, true);
+                cursorPosition = pos;
             });
         }
         // @depends: el, tokens, format, $timeout, InputSelection
@@ -96,6 +185,7 @@
             }
             tokens.splice(start, end-start, token);
             viewTokens.splice(start, end-start, token);
+            model.assign($scope, tokens.join(''));
             $timeout(function(){
                 var pos = viewTokens.slice(0, start).join('').length + format(token).length;
                 sel.setSelection(el, pos, pos, true);
@@ -138,10 +228,18 @@
         }
     }
 
-    function Tokenizer(tokenizers, doBuild) {
-
+    function flip(obj) {
+      var result = {};
+      for (var prop in obj) {
+        if(obj.hasOwnProperty(prop)) {
+          result[obj[prop]] = prop;
+        }
+      }
+      return result;
     }
+
 })(angular.module('arth.tokenized', [
+    'arth.parser.svc'
 ]), 'arthTokenized');
 
 

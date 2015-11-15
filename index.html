@@ -39,149 +39,45 @@ Object.defineProperty(Object.prototype, "flip", {
     return 'arth.'+m.name;
   })).controller('Main', [function(){
     this.modules = modules;
-  }]).controller('Tokenized', ['$rootScope', '$scope', function($rootScope, $scope){
+  }]).controller('Tokenized', ['$rootScope', '$scope', 'ParserFactory', 'MappingParser',
+  function($rootScope, $scope, Parser, Mapping){
+    // Setup parsers
     var C = this;
-    C.cursor = {};
-    C.results = {
-        14: 'Калий',
-        15: 'Натрий',
-        22: 'Билирубин общий',
-        23: 'Билирубин прямой'
+    C.svc = {};
+    var model2view = {
+        1: 'Year',
+        2: 'Month',
+        3: 'Day',
+        4: 'Age'
     };
-    C.flipres = C.results.flip();
-    C.buttons = Object.keys(C.results).map(function(id){
-        return {model: 'result('+id+')', view:  C.results[id]}
+    C.options = {
+      modelviews: [{
+        commonExp: [
+            /\d/, /[\*\/\+\-\^\(\)\.]/,
+            /(?:sin|cos|log|ln)\(/
+        ],
+        mvMap: model2view,
+        regexp: [/\[([^\[\]]+?)\]/, /param\((\d+)\)/],
+        tpl: ['[{{VALUE}}]', 'param({{VALUE}})']
+      }]
+    };
+
+    C.buttons = Object.keys(model2view).map(function(id){
+        return {model: 'param('+id+')', view:  model2view[id]}
     });
     ;[
-      '+', '-', '*', '/', '^', '(', ')', ',',
+      '+', '-', '*', '/', '^', '(', ')', '.',
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].forEach(function(v){
         C.buttons.push({model: v, view: v});
     });
     ;['sin(','cos(','lg(','ln('].forEach(function(v){
         C.buttons.push({model: v, view: v});
     });
-    ;['aa','bb','cc'].forEach(function(v){
-        C.buttons.push({model: v, view: v});
-    });
-
-    C.svc = {};
-    C.options = {
-      svc: C.svc,
-      parsers: [
-        [resParser, 'push'],
-        tokenParser
-      ],
-      formatters: [
-        resFormatter
-      ]
-    };
-    window.C = C;
     C.addToken = addToken;
 
     function addToken (token) {
-      C.svc.addToken(token);
-      C.str = C.svc.tokens.join('');
+      C.options.addToken(token);
     }
-    function resParser(val) {
-        var result = (val || '').replace(/\[Рез: ([^\]]+)\]/g, function(m, n){
-            if (C.flipres[n]) return 'result('+C.flipres[n]+')';
-            return '';
-        });
-        // console.log('resParser', val, result, C.svc.tokens, C.str);
-        return result;
-    }
-    function tokenParser (val, local) {
-      var index = 0;
-      var curIndex = -1;
-      function saveCurIndex(index, msg) {
-        if (~curIndex) return;
-        curIndex = index;
-        console.info('Cursor: ', index, msg, local);
-      }
-      var len = C.svc.tokens.length;
-      var result = (val||'').replace(getModelRegex(), function(all, m) {
-        // console.log('tokenParser.replace', index, m, C.svc.tokens[index]);
-        if (local) return m || '';
-        if (m) {
-          console.log(index, 'matched', m);
-          if (C.svc.tokens[index]!==m) {
-            if (index>=len) {
-              saveCurIndex(index+1, ['append', C.svc.tokens[index], '=>', m]);
-              C.svc.tokens[index] = m;
-            } else {
-              saveCurIndex(index, ['update', C.svc.tokens[index], '=>', m]);
-              C.svc.tokens[index] = m;
-            }
-          }
-          index++;
-        } else {
-        }
-        return m ? m : '';
-      });
-      if (local) return result;
-      if (C.svc.tokens.length > index) {
-        saveCurIndex(index, ['truncate', C.svc.tokens.slice()]);
-        C.svc.tokens.splice(index);
-      } else if (len < index) {
-        index+=(index-len);
-        saveCurIndex(index, ['???', C.svc.tokens.slice(index, 1)[0]]);
-        C.svc.tokens.splice(index);
-      }
-      // console.log('tokenParser', val, result, C.svc.tokens, C.str);
-      // C.str = C.svc.tokens.join('');
-      C.svc.updateView(C.svc.format(result));
-      C.svc.setPos(curIndex);
-      return result;
-    }
-    function resFormatter(val) {
-      var result = (val || '').replace(/result\((\d+)\)/g, function(m, n){
-          if (C.results[n]) return '[Рез: '+C.results[n]+']';
-          return '';
-      });
-      // console.log('resFormatter', val, result, C.svc.tokens, C.str);
-      return result;
-    }
-    function regexParser(val) {
-      var result = (val||'').replace(getViewRegex(), function(all, m) {
-        return m ? m : '';
-      });
-      // console.log('regexParser', val, result, C.svc.tokens, C.str);
-      return val;
-    }
-
-    function getViewRegex() {
-      // /([\d\+\-\*\/\^\(\)\.\,]|\[[^\]]+\]|tok)|.+?/g
-      var functions = ['sin', 'cos', 'tg', 'lg', 'ln'];
-      var validTokens = [];
-      validTokens.push('aa|bb|cc');
-      validTokens.push('\\d');
-      validTokens.push('[\\+\\-\\*\\/\\^\\(\\)\\.\\,]');
-      validTokens.push('\\[Рез: [^\\]\\[]+\\]');
-      functions.forEach(addFn);
-      var str = validTokens.join('|');
-      str = '('+str+')|.+?';
-      return new RegExp(str, 'g');
-      function addFn(fnName) {
-        validTokens.push(fnName+'\\(')
-      }
-    }
-    function getModelRegex() {
-      // /([\d\+\-\*\/\^\(\)\.\,]|\[[^\]]+\]|tok)|.+?/g
-      var functions = ['sin', 'cos', 'tg', 'lg', 'ln'];
-      var validTokens = [];
-      validTokens.push('aa|bb|cc');
-      validTokens.push('\\d');
-      validTokens.push('[\\+\\-\\*\\/\\^\\(\\)\\.]');
-      validTokens.push('result\\(\\d+\\)');
-      functions.forEach(addFn);
-      var str = validTokens.join('|');
-      str = '('+str+')|.+?';
-      return new RegExp(str, 'g');
-      function addFn(fnName) {
-        validTokens.push(fnName+'\\(')
-      }
-    }
-
   }]);
 }([
   {name: 'tokenized', link: 'demo/tpl/tokenized.arth.html', title: 'Tokenized input'},

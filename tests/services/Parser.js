@@ -2,18 +2,17 @@ describe('Parser', function() {
 
     beforeEach(module('arth.parser.svc'));
 
-    var Factory, CSV;
-    beforeEach(inject(function(ParserFactory, CSVParser) {
+    var Factory, CSV, Mapping;
+    beforeEach(inject(function(ParserFactory, CSVParser, MappingParser) {
       Factory = ParserFactory;
       CSV = CSVParser;
+      Mapping = MappingParser;
     }));
 
     describe('CSV parser', function() {
         it('should parse simple csv', function() {
             var row = CSV.parse('Joe,Smith,32\nJane,Doe,26\nMike,Bowel,54');
             expect(row).toEqual([['Joe','Smith','32'],['Jane','Doe','26'],['Mike','Bowel','54']]);
-            // row = _csv.parse('"Joe","John,\n""Smith""",32\nJane,Doe,26\nMike,Bowel,54');
-            // console.log(row);
         });
     });
 
@@ -24,47 +23,38 @@ describe('Parser', function() {
             expect(res).toEqual('Alex Deider is 28 years old.');
         });
     });
-    describe('Formula test type', function () {
+    describe('Mapping parser', function () {
         it('should tokenize formatted view', function(){
-            var viewRegexps = [
-                /\d/, /[\*\/\+\-\^\(\)\.]/,
-                /\[Рез: ([^\[\]]+?)\]/
-            ];
-            var modelRegexps = [
-                /\d/, /[\*\/\+\-\^\(\)\.]/,
-                /result\((\d+)\)/
-            ];
+            var view2model = {'Age': '94', 'Year': '95', };
+            var model2view = {'94': 'Age', '95': 'Year', };
+
+            var vR = /\[([^\[\]]+?)\]/;
+            vR.type = 'param_mapping';
+            vR.mapping = view2model;
+            vR.subst = '{{VALUE}}';
+            vR.template = 'param({{VALUE}})';
+
+            var mR = /param\((\d+)\)/;
+            mR.type = 'param_mapping';
+            mR.mapping = model2view;
+            mR.subst = '{{VALUE}}';
+            mR.template = '[{{VALUE}}]';
+
+            var viewRegexps = [/\d/, /[\*\/\+\-\^\(\)\.]/,  vR];
+            var modelRegexps = [/\d/, /[\*\/\+\-\^\(\)\.]/, mR];
             var views = [
-                ['[Рез: Билирубин общий]-[Рез: Билирубин прямой]excess',['[Рез: Билирубин общий]','-','[Рез: Билирубин прямой]']],
+                ['[Age]-[Year]excess',['[Age]','-','[Year]']],
                 ['1+2*3^0.5', ['1','+','2','*','3','^','0','.','5']]
             ];
             var models = [
-                ['result(94)-result(95)excess',['result(94)','-','result(95)']],
+                ['param(94)-param(95)excess',['param(94)','-','param(95)']],
                 ['1+2*3^0.5', ['1','+','2','*','3','^','0','.','5']]
             ];
-            var view2model = {
-                'Билирубин общий': '94',
-                'Билирубин прямой': '95',
-            };
-            var model2view = {
-                '94': 'Билирубин общий',
-                '95': 'Билирубин прямой',
-            };
 
             var View = Factory.getRepeater(viewRegexps, true);
             var Model = Factory.getRepeater(modelRegexps, true);
-            var ViewToModel = new Factory(viewRegexps, function(token, b, regexp){
-                if(token == '\0') return;
-                return b ? token.replace(regexp, function(all, val) {
-                    return regexp.toString()==='/\\[Рез: ([^\\[\\]]+?)\\]/' ? 'result('+view2model[val]+')' : token;
-                }) : undefined;
-            });
-            var ModelToView = new Factory(modelRegexps, function(token, b, regexp){
-                if(token == '\0') return;
-                return b ? token.replace(regexp, function(all, val) {
-                    return regexp.toString() === '/result\\((\\d+)\\)/' ? '[Рез: '+model2view[val]+']' : token;
-                }) : undefined;
-            });
+            var ViewToModel = new Mapping(viewRegexps);
+            var ModelToView = new Mapping(modelRegexps);
 
             views.forEach(function(view){
                 expect(View.parse(view[0])).toEqual(view[1]);
