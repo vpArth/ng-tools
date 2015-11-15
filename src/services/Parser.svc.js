@@ -2,6 +2,7 @@
 
 module.factory('ParserFactory', ParserFactory);
 module.service('CSVParser', CSVParser);
+module.service('MappingParser', MappingParser);
 
 CSVParser.$inject = ['ParserFactory'];
 // @todo: implement quoted part of CSV parsing
@@ -19,6 +20,25 @@ function CSVParser(Parser) {
     });
 }
 
+MappingParser.$inject = ['ParserFactory'];
+function MappingParser(Parser) {
+    return MappingParserConstructor;
+    function MappingParserConstructor(tokenizers) {
+        return new Parser(tokenizers, function(token, b, regexp, matches){
+            if (token == '\0') return;
+            if (!b) return;
+            switch (regexp.type) {
+                case 'param_mapping':
+                    var val = regexp.mapping[matches[1]];
+                    if (typeof val == 'undefined') return;
+                    var subst = regexp.subst || '{{VALUE}}';
+                    return regexp.template.replace(subst, val);
+                default: return token;
+            }
+        });
+    }
+}
+
 ParserFactory.$inject = [];
 function ParserFactory () {
     angular.extend(Parser.prototype, {
@@ -29,6 +49,7 @@ function ParserFactory () {
     });
     Parser.getRepeater = getRepeater;
     Parser.getReplacer = getReplacer;
+    Parser.getMapping = getMapping;
     return Parser;
 
     function Parser( tokenizers, doBuild ){
@@ -54,6 +75,9 @@ function ParserFactory () {
             }
         };
     }
+    function getMapping(tokenizers) {
+        return new (MappingParser(Parser))(tokenizers);
+    }
 
     function parse(src) {
         this.src = src;
@@ -64,9 +88,9 @@ function ParserFactory () {
         } while (!this.ended);
         return this.tokens;
     }
-    function build(src, real) {
+    function build(src, real, matches) {
         if (src) {
-            var res = this.doBuild ? this.doBuild(src, real, this.tkn) : src;
+            var res = this.doBuild ? this.doBuild(src, real, this.tkn, matches) : src;
             if (typeof res !== 'undefined') {
                 this.tokens.push(res);
             }
@@ -79,7 +103,7 @@ function ParserFactory () {
         self.build(plain, false);
         self.src = self.src.slice(self.min)
             .replace(self.tkn, function replace(match) {
-                self.build(match, true);
+                self.build(match, true, [].slice.call(arguments, 0));
                 return '';
         });
         if (!self.src) {
@@ -102,7 +126,6 @@ function ParserFactory () {
             self.min = self.src.length;
         }
     }
-
 }
 
 })(angular.module('arth.parser.svc', []));
