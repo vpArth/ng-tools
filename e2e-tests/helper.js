@@ -60,7 +60,6 @@ function Helper(browser, protractor) {
     }
     function callElMethod(el, method, args) {
         return browser.executeScript(function (el, method, args) {
-            console.log(el, method, args);
             var method = method.split('.');
             var last = method.pop();
             method.forEach(function (field, i){

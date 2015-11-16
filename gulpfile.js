@@ -22,7 +22,6 @@ gulp.task('dist.min', ['dist'], function() {
         .pipe(jshint({laxcomma: true}))
         .pipe(jshint.reporter('default'))
         .pipe(uglify())
-        .pipe(gulp.dest(paths.dest))
         .pipe(concat('arth.min.js'))
         .pipe(gulp.dest(paths.dest))
         ;

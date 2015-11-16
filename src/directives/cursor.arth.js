@@ -1,6 +1,4 @@
-// @todo: make model.pos settable too
-
-(function (module, directiveName) {
+;(function (module, directiveName) {
     'use strict';
     module.directive(directiveName, Directive);
 

@@ -3,7 +3,6 @@
 
     module.provider('TplLoader', TplLoaderProvider);
 
-
     /**
      * @ngdoc provider
      * @name $TplLoaderProvider

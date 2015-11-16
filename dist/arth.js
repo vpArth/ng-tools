@@ -1,6 +1,4 @@
-// @todo: make model.pos settable too
-
-(function (module, directiveName) {
+;(function (module, directiveName) {
     'use strict';
     module.directive(directiveName, Directive);
 
@@ -372,7 +370,6 @@
 
     module.provider('TplLoader', TplLoaderProvider);
 
-
     /**
      * @ngdoc provider
      * @name $TplLoaderProvider
@@ -507,7 +504,7 @@
  * #load functionality can be fully replaced with `templateUrl`/`replace` directive options
  */
 
-(function (module) {
+;(function (module) {
     'use strict';
 
     module.factory('InputSelection', InputSelection);
@@ -553,6 +550,7 @@
 })(angular.module('arth.svc.InputSelection', []));
 
 ;(function(module){
+    'use strict';
 
 module.factory('ParserFactory', ParserFactory);
 module.service('CSVParser', CSVParser);
@@ -592,7 +590,7 @@ function MappingParser(Parser) {
                             success = false;
                             return;
                         }
-                        tpl = tpl.replace(new RegExp('\\\\\\\$'+(index+1), 'g'), val);
+                        tpl = tpl.replace(new RegExp('\\\\\\$'+(index+1), 'g'), val);
                     });
                     return success ? tpl : (filter?undefined:token);
                 default:
@@ -604,20 +602,78 @@ function MappingParser(Parser) {
 
 ParserFactory.$inject = [];
 function ParserFactory () {
-    angular.extend(Parser.prototype, {
-        parse: parse,
-        build: build,
-        next: next,
-        search: search
-    });
+    var parser;
+
     Parser.getRepeater = getRepeater;
     Parser.getReplacer = getReplacer;
     Parser.getMapping = getMapping;
     return Parser;
 
+    /**
+     * @param {string[],RegExp[]} tokenizers
+     * @param {function} doBuild
+     *
+     * string Parser.src
+     * string[] Parser.tokens
+     * string[] Parser#parse(string)
+     * Parser#doBuild
+     */
     function Parser( tokenizers, doBuild ){
-        this.tokenizers = Array.isArray(tokenizers) ? tokenizers : [tokenizers];
-        if (doBuild) this.doBuild = doBuild;
+        var parser = this, source, ended = true;
+        var curToken, nextIndex;
+        tokenizers = angular.isArray(tokenizers) ? tokenizers : [tokenizers];
+        if (doBuild) parser.doBuild = doBuild;
+        parser.parse = parse;
+
+        return parser;
+
+        function parse(src) {
+            source = src;
+            ended = false;
+            parser.tokens = [];
+            do {
+                next();
+            } while (!ended);
+            return parser.tokens;
+        }
+        function build(src, real, matches) {
+            if (src) {
+                var res = parser.doBuild ? parser.doBuild(src, real, curToken, matches) : src;
+                if (typeof res !== 'undefined') {
+                    parser.tokens.push(res);
+                }
+            }
+        }
+        function next() {
+            var plain;
+            search();
+            plain = source.slice(0, nextIndex);
+            build(plain, false);
+            source = source.slice(nextIndex)
+                .replace(curToken, function replace(match) {
+                    build(match, true, [].slice.call(arguments, 0));
+                    return '';
+            });
+            if (!source) {
+                build('\0', true);
+                ended = true;
+            }
+        }
+        function search() {
+            var i = 0, tkn, idx;
+            nextIndex = -1;
+            curToken = '';
+            while (typeof (tkn = tokenizers[i++]) != 'undefined') {
+                idx = source[tkn.test?'search':'indexOf'](tkn);
+                if(idx != -1 && (nextIndex == -1 || idx < nextIndex)) {
+                    curToken = tkn;
+                    nextIndex = idx;
+                }
+            }
+            if( nextIndex == -1 ) {
+                nextIndex = source.length;
+            }
+        }
     }
 
     function getRepeater(tokenizers, filter) {
@@ -639,55 +695,8 @@ function ParserFactory () {
         };
     }
     function getMapping(tokenizers, filter) {
-        return new (MappingParser(Parser))(tokenizers, filter);
-    }
-
-    function parse(src) {
-        this.src = src;
-        this.ended = false;
-        this.tokens = [];
-        do {
-            this.next();
-        } while (!this.ended);
-        return this.tokens;
-    }
-    function build(src, real, matches) {
-        if (src) {
-            var res = this.doBuild ? this.doBuild(src, real, this.tkn, matches) : src;
-            if (typeof res !== 'undefined') {
-                this.tokens.push(res);
-            }
-        }
-    }
-    function next() {
-        var self = this, plain;
-        self.search();
-        plain = self.src.slice(0, self.min);
-        self.build(plain, false);
-        self.src = self.src.slice(self.min)
-            .replace(self.tkn, function replace(match) {
-                self.build(match, true, [].slice.call(arguments, 0));
-                return '';
-        });
-        if (!self.src) {
-            self.build('\0', true);
-            self.ended = true;
-        }
-    }
-    function search() {
-        var self = this, i = 0, tkn, idx;
-        self.min = -1;
-        self.tkn = '';
-        while (typeof (tkn = self.tokenizers[i++]) != 'undefined') {
-            idx = self.src[tkn.test?'search':'indexOf'](tkn);
-            if(idx != -1 && (self.min == -1 || idx < self.min)) {
-                self.tkn = tkn;
-                self.min = idx;
-            }
-        }
-        if( self.min == -1 ) {
-            self.min = self.src.length;
-        }
+        var P = new MappingParser(Parser);
+        return new P(tokenizers, filter);
     }
 }
 

@@ -1,1 +1,152 @@
-!function(n){function e(n){var e=[],t=e[0]=[];return new n([",","\n"],function(n,e){e?("\n"==n||"\x00"==n)&&(this.tokens.push(t),t=[]):t.push(n)})}function t(n){function e(e,t){return new n(e,function(n,e,r,i){if("\x00"!=n){if(!e)return t?void 0:n;switch(r.type){case"param_mapping":var u=i.slice(1,-2),c=r.template,s=!0;return u.forEach(function(n,e){var t=r.mapping[n];return"undefined"==typeof t?void(s=!1):void(c=c.replace(new RegExp("\\\\\\$"+(e+1),"g"),t))}),s?c:t?void 0:n;default:return n}}})}return e}function r(){function n(n,e){this.tokenizers=Array.isArray(n)?n:[n],e&&(this.doBuild=e)}function e(e,t){function r(n,e){return"\x00"!==n?e?n:t?void 0:n:void 0}return new n(e,r)}function r(e,t){return function(r){function i(n,e,i){return"\x00"!==n?e?n.replace(i,function(n,e){return r[e]}):t?void 0:n:void 0}return new n(e,i)}}function i(e,r){return new(t(n))(e,r)}function u(n){this.src=n,this.ended=!1,this.tokens=[];do this.next();while(!this.ended);return this.tokens}function c(n,e,t){if(n){var r=this.doBuild?this.doBuild(n,e,this.tkn,t):n;"undefined"!=typeof r&&this.tokens.push(r)}}function s(){var n,e=this;e.search(),n=e.src.slice(0,e.min),e.build(n,!1),e.src=e.src.slice(e.min).replace(e.tkn,function(n){return e.build(n,!0,[].slice.call(arguments,0)),""}),e.src||(e.build("\x00",!0),e.ended=!0)}function o(){var n,e,t=this,r=0;for(t.min=-1,t.tkn="";"undefined"!=typeof(n=t.tokenizers[r++]);)e=t.src[n.test?"search":"indexOf"](n),-1!=e&&(-1==t.min||e<t.min)&&(t.tkn=n,t.min=e);-1==t.min&&(t.min=t.src.length)}return angular.extend(n.prototype,{parse:u,build:c,next:s,search:o}),n.getRepeater=e,n.getReplacer=r,n.getMapping=i,n}n.factory("ParserFactory",r),n.service("CSVParser",e),n.service("MappingParser",t),e.$inject=["ParserFactory"],t.$inject=["ParserFactory"],r.$inject=[]}(angular.module("arth.parser.svc",[]));
+;(function(module){
+    'use strict';
+
+module.factory('ParserFactory', ParserFactory);
+module.service('CSVParser', CSVParser);
+module.service('MappingParser', MappingParser);
+
+CSVParser.$inject = ['ParserFactory'];
+// @todo: implement quoted part of CSV parsing
+function CSVParser(Parser) {
+    var rows = [], row = rows[0] = [], resrow;
+    return new Parser([',', '\n'], function(text, isSeparator) {
+        if (isSeparator){
+            if (text == '\n' || text == '\0') { // EOL/EOF
+                this.tokens.push(row);
+                row = [];
+            }
+        } else {
+            row.push(text);
+        }
+    });
+}
+
+MappingParser.$inject = ['ParserFactory'];
+function MappingParser(Parser) {
+    return MappingParserConstructor;
+    function MappingParserConstructor(tokenizers, filter) {
+        return new Parser(tokenizers, function(token, b, regexp, matches){
+            if (token == '\0') return;
+            if (!b) return filter ? undefined : token;
+            switch (regexp.type) {
+                case 'param_mapping':
+                    var m = matches.slice(1, -2);
+                    var tpl = regexp.template;
+                    var success = true;
+                    m.forEach(function (match, index) {
+                        var val = regexp.mapping[match];
+                        if (typeof val == 'undefined') {
+                            success = false;
+                            return;
+                        }
+                        tpl = tpl.replace(new RegExp('\\\\\\$'+(index+1), 'g'), val);
+                    });
+                    return success ? tpl : (filter?undefined:token);
+                default:
+                    return token;
+            }
+        });
+    }
+}
+
+ParserFactory.$inject = [];
+function ParserFactory () {
+    var parser;
+
+    Parser.getRepeater = getRepeater;
+    Parser.getReplacer = getReplacer;
+    Parser.getMapping = getMapping;
+    return Parser;
+
+    /**
+     * @param {string[],RegExp[]} tokenizers
+     * @param {function} doBuild
+     *
+     * string Parser.src
+     * string[] Parser.tokens
+     * string[] Parser#parse(string)
+     * Parser#doBuild
+     */
+    function Parser( tokenizers, doBuild ){
+        var parser = this, source, ended = true;
+        var curToken, nextIndex;
+        tokenizers = angular.isArray(tokenizers) ? tokenizers : [tokenizers];
+        if (doBuild) parser.doBuild = doBuild;
+        parser.parse = parse;
+
+        return parser;
+
+        function parse(src) {
+            source = src;
+            ended = false;
+            parser.tokens = [];
+            do {
+                next();
+            } while (!ended);
+            return parser.tokens;
+        }
+        function build(src, real, matches) {
+            if (src) {
+                var res = parser.doBuild ? parser.doBuild(src, real, curToken, matches) : src;
+                if (typeof res !== 'undefined') {
+                    parser.tokens.push(res);
+                }
+            }
+        }
+        function next() {
+            var plain;
+            search();
+            plain = source.slice(0, nextIndex);
+            build(plain, false);
+            source = source.slice(nextIndex)
+                .replace(curToken, function replace(match) {
+                    build(match, true, [].slice.call(arguments, 0));
+                    return '';
+            });
+            if (!source) {
+                build('\0', true);
+                ended = true;
+            }
+        }
+        function search() {
+            var i = 0, tkn, idx;
+            nextIndex = -1;
+            curToken = '';
+            while (typeof (tkn = tokenizers[i++]) != 'undefined') {
+                idx = source[tkn.test?'search':'indexOf'](tkn);
+                if(idx != -1 && (nextIndex == -1 || idx < nextIndex)) {
+                    curToken = tkn;
+                    nextIndex = idx;
+                }
+            }
+            if( nextIndex == -1 ) {
+                nextIndex = source.length;
+            }
+        }
+    }
+
+    function getRepeater(tokenizers, filter) {
+        return new Parser(tokenizers, BuildRepeater);
+        function BuildRepeater(src, real) {
+            if (src === '\0') return;
+            return real ? src : (filter?undefined:src);
+        }
+    }
+    function getReplacer(tokenizers, filter) {
+        return function(values) {
+            return new Parser(tokenizers, BuildReplacer);
+            function BuildReplacer(src, real, regexp) {
+                if (src === '\0') return;
+                return real ? src.replace(regexp, function(all, name) {
+                   return values[name];
+                }) : (filter?undefined:src);
+            }
+        };
+    }
+    function getMapping(tokenizers, filter) {
+        var P = new MappingParser(Parser);
+        return new P(tokenizers, filter);
+    }
+}
+
+})(angular.module('arth.parser.svc', []));
