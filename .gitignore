@@ -1,7 +1,6 @@
 trash
 node_modules
 bower_components
-bower.json
 *.pid
 *.local.js
 

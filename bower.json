@@ -1,0 +1,25 @@
+{
+  "name": "arth-ng-tools",
+  "description": "Some angular tools(directives, filters etc). Complex package.",
+  "main": "dist/arth.js",
+  "authors": [
+    "Alexander Deider"
+  ],
+  "license": "MIT",
+  "moduleType": [
+    "amd"
+  ],
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test"
+  ],
+  "dependencies": {
+    "angular": "~1.4.7"
+  },
+  "devDependencies": {
+    "angular-mocks": "~1.4.7"
+  }
+}
