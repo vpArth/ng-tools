@@ -47,17 +47,18 @@
              *        Example:
              *              tplLoader.load(el, tplLoader.uri('controls', 'custom.html'), scope).then(cb);
              */
-            function load(el, tpl, scope, replace) {
-                var promise = $http.get(tpl, {cache: $cache});
-                promise.success(function (html) {
-                    // console.log(html);
-                    // var method = replace ? 'replaceWith' : 'html';
-                    // el[method]($compile(html)(scope));
-                    // $compile(el.contents())(scope);
-                    el.html(html);
-                    $compile(el.contents())(scope);
+            function load(outerEl, tpl, scope, replace) {
+                return $http.get(tpl, {cache: $cache}).then(function (response) {
+                    var html = response.data;
+                    outerEl.html(html);
+                    var innerEl = $compile(outerEl.contents())(scope);
+                    if (replace) {
+                        outerEl.replaceWith(innerEl);
+                        return innerEl;
+                    } else {
+                        return outerEl;
+                    }
                 });
-                return promise;
             }
         }
 
@@ -131,3 +132,8 @@
     }
 
 })(angular.module('arth.tplloader', []));
+
+/**
+ * This module written for step-by-step refactore my old-old code
+ * #load functionality can be fully replaced with `templateUrl`/`replace` directive options
+ */

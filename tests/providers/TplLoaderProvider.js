@@ -67,7 +67,7 @@ describe('Test TplLoader provider', function () {
            backend.verifyNoOutstandingRequest();
         });
 
-        it('should download and compile template', function(){
+        it('should download, compile template and apply to innerHTML', function(){
             var tplLoader = TplLoaderProvider.$get(http, templateCache, compile);
             var el = compile('<div>Not loaded yet</div>')(scope);;
             tplLoader.load(el, '/index.tpl', scope);
@@ -80,6 +80,29 @@ describe('Test TplLoader provider', function () {
 
             scope.name = 'Alice';
             scope.$digest();
+            expect(el.prop('tagName')).toBe('DIV');
+            expect(el.find('h1').text()).toBe('Hello, Alice!');
+
+            dealoc(scope);
+        });
+
+        it('should be able to replace parent element', function(){
+            var tplLoader = TplLoaderProvider.$get(http, templateCache, compile);
+            var el = compile('<div>Not loaded yet</div>')(scope);
+            tplLoader.load(el, '/index.tpl', scope, true).then(function (element) {
+                el = element;
+            });
+
+            backend.expect('GET', '/index.tpl').respond('<h1>Hello, {{name}}!</h1>');
+            backend.flush();
+
+            scope.name = 'World';
+            scope.$digest();
+            expect(el.text()).toBe('Hello, World!');
+
+            scope.name = 'Alice';
+            scope.$digest();
+            expect(el.prop('tagName')).toBe('H1');
             expect(el.text()).toBe('Hello, Alice!');
 
             dealoc(scope);
