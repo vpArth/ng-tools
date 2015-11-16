@@ -19,8 +19,10 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+    'https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js',
       'bower_components/angular/angular.min.js',
       'bower_components/angular-mocks/angular-mocks.js',
+      'https://rawgit.com/angular/angular.js/master/test/helpers/testabilityPatch.js', //dealoc
       'dist/arth.js',
       'tests/**/*.js'
     ],
