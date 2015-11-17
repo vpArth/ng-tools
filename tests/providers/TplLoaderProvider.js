@@ -107,6 +107,22 @@ describe('Test TplLoader provider', function () {
 
             dealoc(scope);
         });
+
+        it('should works with loadTpl shortcut', function(){
+            var tplLoader = TplLoaderProvider.$get(http, templateCache, compile);
+            var el = compile('<div>Not loaded yet</div>')(scope);
+
+            tplLoader.loadTpl(el, scope, 'controls.module', 'index.tpl.html', true).then(function (element) {
+                el = element;
+            });
+
+            backend.expect('GET', '/modules/controls.module/templates/index.tpl.html').respond('<h1>Hello, {{name}}!</h1>');
+            backend.flush();
+
+            scope.name = 'World';
+            scope.$digest();
+            expect(el.text()).toBe('Hello, World!');
+        });
     });
 
 });
