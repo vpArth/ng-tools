@@ -1,3 +1,14 @@
+;(function() {
+    "use strict";
+    angular.module('arth.lib', [
+        'arth.cursor',
+        'arth.tokenized',
+        'arth.tplloader',
+        'arth.svc.InputSelection',
+        'arth.parser.svc'
+    ]);
+})();
+
 ;(function (module, directiveName) {
     'use strict';
     module.directive(directiveName, Directive);
@@ -400,7 +411,8 @@
         function TplLoader($http, $cache, $compile) {
             return {
                 uri: uri,
-                load: load
+                load: load,
+                loadTpl: loadTpl
             };
 
             /**
@@ -425,6 +437,10 @@
                         return outerEl;
                     }
                 });
+            }
+
+            function loadTpl(el, scope, module, tpl, replace) {
+                return load(el, uri(module, tpl), scope, replace);
             }
         }
 

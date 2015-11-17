@@ -33,7 +33,8 @@
         function TplLoader($http, $cache, $compile) {
             return {
                 uri: uri,
-                load: load
+                load: load,
+                loadTpl: loadTpl
             };
 
             /**
@@ -58,6 +59,10 @@
                         return outerEl;
                     }
                 });
+            }
+
+            function loadTpl(el, scope, module, tpl, replace) {
+                return load(el, uri(module, tpl), scope, replace);
             }
         }
 
