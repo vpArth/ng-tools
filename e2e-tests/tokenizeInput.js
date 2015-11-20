@@ -58,7 +58,7 @@ describe('Tokenized', function() {
                 buttons.get(0).click();
                 expect(input.getAttribute('value')).toEqual('[Year]-2000+1*[Year]');
             });
-        })
+        });
         describe('setModelValue() method', function(){
             it('should format and setup provided model value', function(){
                 actionInput.sendKeys('param(1)-2000');
@@ -68,7 +68,13 @@ describe('Tokenized', function() {
                 buttons.get(0).click();
                 expect(input.getAttribute('value')).toEqual('[Year]-2000+1*[Year]');
             });
-        })
+        });
+        describe('getViewValue() method', function(){
+            it('should return actual view value', function(){
+                actionButtons.get(3).click();
+                expect(actionInput.getAttribute('value')).toEqual('12+[Year]');
+            });
+        });
     });
 });
 

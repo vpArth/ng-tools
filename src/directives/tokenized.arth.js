@@ -28,6 +28,7 @@
           addToken: addToken,
           setModelValue: setModelValue,
           setViewValue: setViewValue,
+          getViewValue: getViewValue,
           clear: clear
       });
 
@@ -190,6 +191,9 @@
         tokens.length = 0;
         toks.forEach(function(a){tokens.push(a);});
         model.assign($scope, tokens.join(''));
+      }
+      function getViewValue() {
+        return tokens.map(format).join('');
       }
     }
 

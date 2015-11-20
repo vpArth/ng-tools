@@ -79,6 +79,7 @@
     });
     C.addToken = addToken;
     C.setView = setView;
+    C.getView = getView;
     C.setModel = setModel;
     C.clear = clear;
 
@@ -87,6 +88,9 @@
     }
     function setView (value) {
       C.options.setViewValue(value);
+    }
+    function getView () {
+      return C.options.getViewValue();
     }
     function setModel (value) {
       C.options.setModelValue(value);
