@@ -2,7 +2,7 @@ var help = new (require('./helper.js').Helper)(browser, protractor);
 var log4js = require('log4js');
 var logger = log4js.getLogger();
 
-var input, form, menu, buttons;
+var input, form, menu, buttons, actionButtons, actionInput;
 describe('Tokenized', function() {
     beforeEach(function(){
         browser.get('');
@@ -13,6 +13,8 @@ describe('Tokenized', function() {
 
         input = element(by.model('tok.str'));
         input.click();
+        actionButtons = element.all(by.css('.actionBtn'));
+        actionInput = element(by.model('tok.demostr'));
     });
     describe('On user input', function() {
 
@@ -31,6 +33,42 @@ describe('Tokenized', function() {
             input.sendKeys(protractor.Key.DELETE);
             // expect(help.getElProperty(input, 'selectionStart')).toBe(0).butNowItIs(16);
         });
+    });
+    describe('Exported actions', function(){
+        beforeEach(function(){
+            input.sendKeys('12+');
+            buttons.get(0).click();
+            expect(input.getAttribute('value')).toEqual('12+[Year]');
+        });
+        describe('clear() method', function(){
+            it('should clear model and view', function(){
+                actionButtons.get(2).click();
+                expect(input.getAttribute('value')).toEqual('');
+                input.sendKeys('12+');
+                buttons.get(0).click();
+                expect(input.getAttribute('value')).toEqual('12+[Year]');
+            });
+        });
+        describe('setViewValue() method', function(){
+            it('should parse and setup provided view value', function(){
+                actionInput.sendKeys('[Year]-2000');
+                actionButtons.get(0).click();
+                expect(input.getAttribute('value')).toEqual('[Year]-2000');
+                input.sendKeys('+1*');
+                buttons.get(0).click();
+                expect(input.getAttribute('value')).toEqual('[Year]-2000+1*[Year]');
+            });
+        })
+        describe('setModelValue() method', function(){
+            it('should format and setup provided model value', function(){
+                actionInput.sendKeys('param(1)-2000');
+                actionButtons.get(1).click();
+                expect(input.getAttribute('value')).toEqual('[Year]-2000');
+                input.sendKeys('+1*');
+                buttons.get(0).click();
+                expect(input.getAttribute('value')).toEqual('[Year]-2000+1*[Year]');
+            });
+        })
     });
 });
 

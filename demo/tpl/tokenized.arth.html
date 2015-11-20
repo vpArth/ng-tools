@@ -14,6 +14,12 @@
                     {{button.view}}
                 </button>
             </p>
+            <p>
+                <input ng-model="tok.demostr" />
+                <button class="actionBtn" type="button" ng-click="tok.setView(tok.demostr)">SetView</button>
+                <button class="actionBtn" type="button" ng-click="tok.setModel(tok.demostr)">SetModel</button>
+                <button class="actionBtn" type="button" ng-click="tok.clear()">Clear</button>
+            </p>
         </div>
     </div>
 </div>

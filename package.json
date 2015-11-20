@@ -14,7 +14,7 @@
     "karma": "[ -e karma.pid ] && (kill $(cat karma.pid); rm karma.pid; echo Karma Stopped) || (node_modules/.bin/karma start --auto-watch >/dev/null 2>&1 & echo $!>karma.pid)",
     "start": "node_modules/.bin/gulp watch >gulp.log 2>&1 & echo $!>gulp.pid",
     "stop": "kill $(cat gulp.pid); rm gulp.pid; echo Gulp Stopped",
-    "postinstall": "node_modules/.bin/bower install && npm prune"
+    "postinstall": "node_modules/.bin/bower install && npm prune; node_modules/.bin/webdriver-manager update"
   },
   "repository": {
     "type": "git",

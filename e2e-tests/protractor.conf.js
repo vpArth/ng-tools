@@ -8,6 +8,7 @@ var config = {
     'browserName': 'chrome'
   },
   baseUrl: 'https://vparth.github.io/ng-tools/',
+  // baseUrl: 'http://localhost:3333/',
   framework: 'jasmine',
   jasmineNodeOpts: {
     defaultTimeoutInterval: 30000

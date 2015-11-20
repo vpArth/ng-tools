@@ -78,9 +78,21 @@
         C.buttons.push({model: v, view: v});
     });
     C.addToken = addToken;
+    C.setView = setView;
+    C.setModel = setModel;
+    C.clear = clear;
 
     function addToken (token) {
       C.options.addToken(token);
+    }
+    function setView (value) {
+      C.options.setViewValue(value);
+    }
+    function setModel (value) {
+      C.options.setModelValue(value);
+    }
+    function clear (value) {
+      C.options.clear(value);
     }
     function flip(obj) {
       var result = {};

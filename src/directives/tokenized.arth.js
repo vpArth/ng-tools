@@ -25,11 +25,15 @@
         ;
       // export interface
       angular.extend(options, {
-          addToken: addToken
+          addToken: addToken,
+          setModelValue: setModelValue,
+          setViewValue: setViewValue,
+          clear: clear
       });
 
       setupModelView(options.modelviews);
 
+      var View, Model;
       function setupModelView(cfg) {
         var rc = angular.isArray(cfg.commonExp) ? cfg.commonExp : [cfg.commonExp];
         var rv = rc.slice();
@@ -49,8 +53,8 @@
           rm.push(modelReg);
         });
 
-        var View = Parser.getRepeater(rv, true);
-        var Model = Parser.getRepeater(rm, true);
+        View = Parser.getRepeater(rv, true);
+        Model = Parser.getRepeater(rm, true);
         View.toModel = Parser.getMapping(rv, true);
         Model.toView = Parser.getMapping(rm, true);
 
@@ -173,6 +177,19 @@
             var pos = viewTokens.slice(0, start).join('').length + format(token).length;
             sel.setSelection(el, pos, pos, true);
         });
+      }
+      function clear() {
+        setViewValue();
+      }
+      function setModelValue(value) {
+        setViewValue(format(value));
+      }
+      function setViewValue(value) {
+        if (typeof value == 'undefined') value = '';
+        var toks = View.toModel.parse(value);
+        tokens.length = 0;
+        toks.forEach(function(a){tokens.push(a);});
+        model.assign($scope, tokens.join(''));
       }
     }
 
