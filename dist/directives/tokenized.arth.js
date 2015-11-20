@@ -191,6 +191,10 @@
         tokens.length = 0;
         toks.forEach(function(a){tokens.push(a);});
         model.assign($scope, tokens.join(''));
+        if (value !== ngModel.$viewValue) {
+            ngModel.$setViewValue(value);
+            ngModel.$render();
+        }
       }
       function getViewValue() {
         return tokens.map(format).join('');
